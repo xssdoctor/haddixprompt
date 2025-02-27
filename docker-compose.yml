@@ -1,0 +1,32 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "9001:9001"
+    environment:
+      - PORT=9001
+    volumes:
+      - ./backend/attack_evasions:/app/attack_evasions
+      - ./backend/attack_intents:/app/attack_intents
+      - ./backend/attack_techniques:/app/attack_techniques
+    user: "${UID:-1000}:${GID:-1000}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9001/api/intents"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "9002:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:9001
+    depends_on:
+      backend:
+        condition: service_healthy

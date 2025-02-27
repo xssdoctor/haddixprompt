@@ -1,0 +1,82 @@
+FROM ubuntu:20.04
+
+# Avoid prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    golang \
+    nodejs \
+    npm \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up work directory
+WORKDIR /app
+
+# Copy the entire project
+COPY . .
+
+# Set up the backend
+WORKDIR /app/backend
+
+# Print directory contents for debugging
+RUN ls -la && ls -la attack_intents || echo "attack_intents directory not found"
+
+RUN go mod download
+RUN go build -o backend-server
+
+# Set up the frontend
+WORKDIR /app/frontend
+RUN npm install
+
+# Set up environment variables
+ENV PORT=9001
+ENV REACT_APP_API_URL=http://localhost:9001
+
+# Expose ports
+EXPOSE 9001 9002
+
+# Create wait-for-backend.sh script
+WORKDIR /app
+RUN echo '#!/bin/bash' > /app/wait-for-backend.sh
+RUN echo '' >> /app/wait-for-backend.sh
+RUN echo 'echo "Waiting for backend to be ready..."' >> /app/wait-for-backend.sh
+RUN echo 'max_retries=30' >> /app/wait-for-backend.sh
+RUN echo 'counter=0' >> /app/wait-for-backend.sh
+RUN echo 'until curl -s http://localhost:9001/api/intents > /dev/null; do' >> /app/wait-for-backend.sh
+RUN echo '  if [ $counter -eq $max_retries ]; then' >> /app/wait-for-backend.sh
+RUN echo '    echo "Error: Backend failed to start in time"' >> /app/wait-for-backend.sh
+RUN echo '    exit 1' >> /app/wait-for-backend.sh
+RUN echo '  fi' >> /app/wait-for-backend.sh
+RUN echo '  echo "Backend not ready yet. Waiting 2 seconds..."' >> /app/wait-for-backend.sh
+RUN echo '  sleep 2' >> /app/wait-for-backend.sh
+RUN echo '  counter=$((counter+1))' >> /app/wait-for-backend.sh
+RUN echo 'done' >> /app/wait-for-backend.sh
+RUN echo 'echo "Backend is ready!"' >> /app/wait-for-backend.sh
+RUN chmod +x /app/wait-for-backend.sh
+
+# Start both services using a simple bash script
+RUN echo '#!/bin/bash' > /app/start.sh
+RUN echo 'cd /app/backend' >> /app/start.sh
+RUN echo 'echo "Starting backend server..."' >> /app/start.sh
+RUN echo 'echo "Contents of attack_intents directory:"' >> /app/start.sh
+RUN echo 'ls -la attack_intents' >> /app/start.sh
+RUN echo './backend-server &' >> /app/start.sh
+RUN echo 'backend_pid=$!' >> /app/start.sh
+RUN echo 'cd /app' >> /app/start.sh
+RUN echo './wait-for-backend.sh' >> /app/start.sh
+RUN echo 'if [ $? -ne 0 ]; then' >> /app/start.sh
+RUN echo '  echo "Backend failed to start. Exiting."' >> /app/start.sh
+RUN echo '  kill $backend_pid 2>/dev/null' >> /app/start.sh
+RUN echo '  exit 1' >> /app/start.sh
+RUN echo 'fi' >> /app/start.sh
+RUN echo 'cd /app/frontend' >> /app/start.sh
+RUN echo 'echo "Starting frontend..."' >> /app/start.sh
+RUN echo 'npm start' >> /app/start.sh
+
+RUN chmod +x /app/start.sh
+
+CMD ["/app/start.sh"] 
