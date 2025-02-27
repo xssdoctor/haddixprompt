@@ -201,7 +201,7 @@ select option {
   background: var(--dark);
   padding: 1.5rem;
   border-radius: 8px;
-  min-height: 180px;
+  min-height: 120px;
   border: 1px solid var(--gray-dark);
   font-family: "JetBrains Mono", "Consolas", "Courier New", monospace;
   line-height: 1.6;
@@ -209,6 +209,13 @@ select option {
   color: var(--text);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
+  transition: all 0.3s ease;
+}
+
+.response-box:hover {
+  border-color: var(--primary-light);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(138, 68, 245, 0.1);
 }
 
 .response-box::before {
@@ -398,4 +405,70 @@ select[multiple] {
 /* Glow effect on hover for selects */
 select:hover {
   border-color: var(--primary-light);
+}
+
+/* Example container styling */
+.example-container {
+  margin-bottom: 2rem;
+  animation: fadeIn 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.example-container:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.example-container:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.example-container h3 {
+  color: var(--primary-light);
+  margin-bottom: 0.75rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.example-container h3::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--primary);
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+/* Single select dropdown styling */
+.single-select {
+  height: auto;
+  padding: 1rem;
+  background-color: var(--gray-dark);
+  border: 1px solid var(--gray);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a56cf5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1.2em;
+  padding-right: 2.5rem;
+}
+
+.single-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(138, 68, 245, 0.2);
+  background-color: rgba(138, 68, 245, 0.05);
+}
+
+.single-select option {
+  background-color: var(--dark-light);
+  color: var(--text);
+  padding: 0.75rem;
 }

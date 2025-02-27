@@ -10,12 +10,13 @@ function App() {
   const [evasionsList, setEvasionsList] = useState([]);
 
   // Selections
-  const [selectedIntents, setSelectedIntents] = useState([]);
+  const [selectedIntent, setSelectedIntent] = useState("");
   const [selectedTechniques, setSelectedTechniques] = useState([]);
   const [selectedEvasions, setSelectedEvasions] = useState([]);
 
   // Response streaming and loading state
-  const [responseText, setResponseText] = useState("");
+  const [responseExamples, setResponseExamples] = useState(["", "", ""]);
+  const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -45,6 +46,10 @@ function App() {
     }
   };
 
+  const handleIntentChange = (e) => {
+    setSelectedIntent(e.target.value);
+  };
+
   const handleSelectChange = (e, setSelected) => {
     const { options } = e.target;
     const chosen = [];
@@ -58,53 +63,89 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setResponseText("");
+    setResponseExamples(["", "", ""]);
+    setCurrentExampleIndex(0);
     setIsLoading(true);
     setError(null);
 
-    const body = {
-      apiKey,
-      intents: selectedIntents,
-      techniques: selectedTechniques,
-      evasions: selectedEvasions,
+    // Check if intent is selected
+    if (!selectedIntent) {
+      setError("Please select an intent");
+      setIsLoading(false);
+      return;
+    }
+
+    const generateExample = async (index) => {
+      try {
+        const body = {
+          apiKey,
+          intents: [selectedIntent],
+          techniques: selectedTechniques,
+          evasions: selectedEvasions,
+          numExamples: 1,
+        };
+
+        const response = await fetch(baseUrl + "/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Error from server");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let exampleText = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          // SSE lines are typically in the format "data: <content>\n\n"
+          const lines = chunk.split("\n");
+          lines.forEach((line) => {
+            if (line.startsWith("data: ")) {
+              const text = line.replace("data: ", "");
+              if (text !== "[DONE]") {
+                exampleText += text;
+                setResponseExamples((prev) => {
+                  const updated = [...prev];
+                  updated[index] = exampleText;
+                  return updated;
+                });
+              }
+            }
+          });
+        }
+
+        return exampleText;
+      } catch (err) {
+        setError(err.message || "An error occurred while generating content");
+        console.error("Generation error:", err);
+        return "";
+      }
     };
 
     try {
-      const response = await fetch(baseUrl + "/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      // Generate 3 examples sequentially
+      setCurrentExampleIndex(0);
+      await generateExample(0);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Error from server");
-      }
+      setCurrentExampleIndex(1);
+      await generateExample(1);
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        // SSE lines are typically in the format "data: <content>\n\n"
-        const lines = chunk.split("\n");
-        lines.forEach((line) => {
-          if (line.startsWith("data: ")) {
-            const text = line.replace("data: ", "");
-            if (text !== "[DONE]") {
-              setResponseText((prev) => prev + text);
-            }
-          }
-        });
-      }
+      setCurrentExampleIndex(2);
+      await generateExample(2);
     } catch (err) {
       setError(err.message || "An error occurred while generating content");
       console.error("Generation error:", err);
     } finally {
       setIsLoading(false);
+      setCurrentExampleIndex(-1);
     }
   };
 
@@ -144,31 +185,20 @@ function App() {
 
           <div className="form-layout">
             <div className="form-group">
-              <label>
-                Intents{" "}
-                <span className="help-text">
-                  (hold Ctrl/Cmd to select multiple)
-                </span>
-              </label>
+              <label>Intent (select one)</label>
               <select
-                multiple
-                value={selectedIntents}
-                onChange={(e) => handleSelectChange(e, setSelectedIntents)}
-                size={5}
+                value={selectedIntent}
+                onChange={handleIntentChange}
+                className="single-select"
+                required
               >
+                <option value="">-- Select an Intent --</option>
                 {intentsList.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
               </select>
-              <div className="selection-summary">
-                {selectedIntents.length > 0 ? (
-                  <small>Selected: {selectedIntents.join(", ")}</small>
-                ) : (
-                  <small>No intents selected</small>
-                )}
-              </div>
             </div>
 
             <div className="form-group">
@@ -230,24 +260,34 @@ function App() {
 
           <div className="button-container">
             <button type="submit" disabled={isLoading} className="submit-btn">
-              {isLoading ? "Generating..." : "Generate Prompt Injection"}
+              {isLoading ? "Generating Examples..." : "Generate 3 Examples"}
             </button>
           </div>
         </form>
 
         <div className="output">
-          <h2>AI Generated Prompt Injection:</h2>
-          <div className="response-box">
-            {isLoading && !responseText ? (
-              <div className="loading-dots">Generating prompt injection</div>
-            ) : responseText ? (
-              <div className="response-content">{responseText}</div>
-            ) : (
-              <div className="empty-state">
-                Your generated prompt will appear here
+          <h2>AI Generated Prompt Injections:</h2>
+
+          {responseExamples.map((example, index) => (
+            <div key={index} className="example-container">
+              <h3>Example {index + 1}</h3>
+              <div className="response-box">
+                {isLoading && currentExampleIndex === index ? (
+                  <div className="loading-dots">
+                    Generating example {index + 1}
+                  </div>
+                ) : example ? (
+                  <div className="response-content">{example}</div>
+                ) : (
+                  <div className="empty-state">
+                    {isLoading && currentExampleIndex < index
+                      ? "Waiting to generate..."
+                      : "Example will appear here"}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
       <footer className="app-footer">
