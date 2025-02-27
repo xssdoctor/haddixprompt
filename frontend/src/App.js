@@ -109,136 +109,150 @@ function App() {
   };
 
   return (
-    <div className="container">
-      <h1>Prompt Injection Generator</h1>
-
-      {error && (
-        <div className="error-message">
-          <p>{error}</p>
+    <div className="app-container">
+      <header className="app-header">
+        <div className="logo-container">
+          <img
+            src="https://avatars.githubusercontent.com/u/171357548?s=400&u=a47e288f29a9d0c0fa3806539dc69e9666481108&v=4"
+            alt="Arcanum Logo"
+            className="logo"
+          />
         </div>
-      )}
+        <h1>Prompt Injection Generator</h1>
+      </header>
 
-      <form onSubmit={handleSubmit}>
-        <div className="api-key-section">
-          <div className="form-group">
-            <label>OpenAI API Key:</label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Enter your OpenAI API key"
-              required
-            />
+      <div className="container">
+        {error && (
+          <div className="error-message">
+            <p>{error}</p>
           </div>
-        </div>
+        )}
 
-        <div className="form-layout">
-          <div className="form-group">
-            <label>
-              Intents{" "}
-              <span className="help-text">
-                (hold Ctrl/Cmd to select multiple)
-              </span>
-            </label>
-            <select
-              multiple
-              value={selectedIntents}
-              onChange={(e) => handleSelectChange(e, setSelectedIntents)}
-              size={5}
-            >
-              {intentsList.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <div className="selection-summary">
-              {selectedIntents.length > 0 ? (
-                <small>Selected: {selectedIntents.join(", ")}</small>
-              ) : (
-                <small>No intents selected</small>
-              )}
+        <form onSubmit={handleSubmit}>
+          <div className="api-key-section">
+            <div className="form-group">
+              <label>OpenAI API Key:</label>
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Enter your OpenAI API key"
+                required
+              />
             </div>
           </div>
 
-          <div className="form-group">
-            <label>
-              Techniques{" "}
-              <span className="help-text">
-                (hold Ctrl/Cmd to select multiple)
-              </span>
-            </label>
-            <select
-              multiple
-              value={selectedTechniques}
-              onChange={(e) => handleSelectChange(e, setSelectedTechniques)}
-              size={5}
-            >
-              {techniquesList.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <div className="selection-summary">
-              {selectedTechniques.length > 0 ? (
-                <small>Selected: {selectedTechniques.join(", ")}</small>
-              ) : (
-                <small>No techniques selected</small>
-              )}
+          <div className="form-layout">
+            <div className="form-group">
+              <label>
+                Intents{" "}
+                <span className="help-text">
+                  (hold Ctrl/Cmd to select multiple)
+                </span>
+              </label>
+              <select
+                multiple
+                value={selectedIntents}
+                onChange={(e) => handleSelectChange(e, setSelectedIntents)}
+                size={5}
+              >
+                {intentsList.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+              <div className="selection-summary">
+                {selectedIntents.length > 0 ? (
+                  <small>Selected: {selectedIntents.join(", ")}</small>
+                ) : (
+                  <small>No intents selected</small>
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>
+                Techniques{" "}
+                <span className="help-text">
+                  (hold Ctrl/Cmd to select multiple)
+                </span>
+              </label>
+              <select
+                multiple
+                value={selectedTechniques}
+                onChange={(e) => handleSelectChange(e, setSelectedTechniques)}
+                size={5}
+              >
+                {techniquesList.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+              <div className="selection-summary">
+                {selectedTechniques.length > 0 ? (
+                  <small>Selected: {selectedTechniques.join(", ")}</small>
+                ) : (
+                  <small>No techniques selected</small>
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>
+                Evasions{" "}
+                <span className="help-text">
+                  (hold Ctrl/Cmd to select multiple)
+                </span>
+              </label>
+              <select
+                multiple
+                value={selectedEvasions}
+                onChange={(e) => handleSelectChange(e, setSelectedEvasions)}
+                size={5}
+              >
+                {evasionsList.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+              <div className="selection-summary">
+                {selectedEvasions.length > 0 ? (
+                  <small>Selected: {selectedEvasions.join(", ")}</small>
+                ) : (
+                  <small>No evasions selected</small>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <label>
-              Evasions{" "}
-              <span className="help-text">
-                (hold Ctrl/Cmd to select multiple)
-              </span>
-            </label>
-            <select
-              multiple
-              value={selectedEvasions}
-              onChange={(e) => handleSelectChange(e, setSelectedEvasions)}
-              size={5}
-            >
-              {evasionsList.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <div className="selection-summary">
-              {selectedEvasions.length > 0 ? (
-                <small>Selected: {selectedEvasions.join(", ")}</small>
-              ) : (
-                <small>No evasions selected</small>
-              )}
-            </div>
+          <div className="button-container">
+            <button type="submit" disabled={isLoading} className="submit-btn">
+              {isLoading ? "Generating..." : "Generate Prompt Injection"}
+            </button>
           </div>
-        </div>
+        </form>
 
-        <div className="button-container">
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? "Generating..." : "Generate Prompt Injection"}
-          </button>
-        </div>
-      </form>
-
-      <div className="output">
-        <h2>AI Generated Prompt Injection:</h2>
-        <div className="response-box">
-          {isLoading && !responseText ? (
-            <div className="loading-dots">Generating prompt injection</div>
-          ) : responseText ? (
-            <div className="response-content">{responseText}</div>
-          ) : (
-            <div className="empty-state">
-              Your generated prompt will appear here
-            </div>
-          )}
+        <div className="output">
+          <h2>AI Generated Prompt Injection:</h2>
+          <div className="response-box">
+            {isLoading && !responseText ? (
+              <div className="loading-dots">Generating prompt injection</div>
+            ) : responseText ? (
+              <div className="response-content">{responseText}</div>
+            ) : (
+              <div className="empty-state">
+                Your generated prompt will appear here
+              </div>
+            )}
+          </div>
         </div>
       </div>
+      <footer className="app-footer">
+        <p>Powered by Arcanum Intelligence</p>
+      </footer>
     </div>
   );
 }
